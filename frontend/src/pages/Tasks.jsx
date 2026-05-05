@@ -8,12 +8,14 @@ const Tasks = () => {
     const { user } = useContext(AuthContext);
     const [tasks, setTasks] = useState([]);
     const [projects, setProjects] = useState([]);
+    const [users, setUsers] = useState([]);
     const [showCreate, setShowCreate] = useState(false);
     
     const [newTask, setNewTask] = useState({
         title: '',
         description: '',
         project: '',
+        assignedTo: '',
         dueDate: ''
     });
 
@@ -40,10 +42,21 @@ const Tasks = () => {
         }
     };
 
+    const fetchUsers = async () => {
+        try {
+            const config = { headers: { Authorization: `Bearer ${user.token}` } };
+            const { data } = await api.get('/auth/users', config);
+            setUsers(data);
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
     useEffect(() => {
         fetchTasks();
         if (user.role === 'Admin') {
             fetchProjects();
+            fetchUsers();
         }
     }, [user]);
 
@@ -51,9 +64,11 @@ const Tasks = () => {
         e.preventDefault();
         try {
             const config = { headers: { Authorization: `Bearer ${user.token}` } };
-            await api.post('/tasks', newTask, config);
+            const payload = { ...newTask };
+            if (!payload.assignedTo) delete payload.assignedTo;
+            await api.post('/tasks', payload, config);
             setShowCreate(false);
-            setNewTask({ title: '', description: '', project: projects[0]?._id || '', dueDate: '' });
+            setNewTask({ title: '', description: '', project: projects[0]?._id || '', assignedTo: '', dueDate: '' });
             fetchTasks();
         } catch (error) {
             console.error(error);
@@ -116,24 +131,42 @@ const Tasks = () => {
                                 ))}
                             </select>
                         </div>
+                        
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1rem', marginBottom: '1rem' }}>
+                            <select
+                                className="input-field"
+                                value={newTask.assignedTo}
+                                onChange={(e) => setNewTask({...newTask, assignedTo: e.target.value})}
+                                style={{ appearance: 'none' }}
+                            >
+                                <option value="">Unassigned</option>
+                                {users.filter(u => u._id !== user._id).map(u => (
+                                    <option key={u._id} value={u._id} style={{ background: 'var(--bg-dark)' }}>{u.name} ({u.role})</option>
+                                ))}
+                            </select>
+                            
+                            <div style={{ width: '100%' }}>
+                                <DatePicker
+                                    selected={newTask.dueDate ? new Date(newTask.dueDate) : null}
+                                    onChange={(date) => setNewTask({...newTask, dueDate: date})}
+                                    className="input-field"
+                                    placeholderText="Select Due Date"
+                                    dateFormat="yyyy-MM-dd"
+                                    isClearable
+                                    onKeyDown={(e) => e.preventDefault()}
+                                />
+                            </div>
+                        </div>
+
                         <textarea
                             className="input-field"
                             placeholder="Description"
                             rows="2"
                             value={newTask.description}
                             onChange={(e) => setNewTask({...newTask, description: e.target.value})}
+                            style={{ marginBottom: '1rem' }}
                         ></textarea>
-                        <div style={{ width: '100%', marginBottom: '1rem' }}>
-                            <DatePicker
-                                selected={newTask.dueDate ? new Date(newTask.dueDate) : null}
-                                onChange={(date) => setNewTask({...newTask, dueDate: date})}
-                                className="input-field"
-                                placeholderText="Select Due Date"
-                                dateFormat="yyyy-MM-dd"
-                                isClearable
-                                onKeyDown={(e) => e.preventDefault()}
-                            />
-                        </div>
+                        
                         <button type="submit" className="btn-primary">Create Task</button>
                     </form>
                 </div>
@@ -148,7 +181,9 @@ const Tasks = () => {
                                 <span className={getStatusBadgeClass(task.status)}>{task.status}</span>
                             </div>
                             <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>
-                                Project: {task.project?.name || 'Unknown'} | Due: {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'No date'}
+                                Project: {task.project?.name || 'Unknown'} 
+                                {user.role === 'Admin' && task.assignedTo && ` | Assigned to: ${task.assignedTo.name}`}
+                                 | Due: {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'No date'}
                             </p>
                             <p style={{ color: 'var(--text-light)', fontSize: '0.9rem' }}>{task.description}</p>
                         </div>

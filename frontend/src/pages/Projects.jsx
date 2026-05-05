@@ -5,8 +5,9 @@ import { AuthContext } from '../context/AuthContext';
 const Projects = () => {
     const { user } = useContext(AuthContext);
     const [projects, setProjects] = useState([]);
+    const [users, setUsers] = useState([]);
     const [showCreate, setShowCreate] = useState(false);
-    const [newProject, setNewProject] = useState({ name: '', description: '' });
+    const [newProject, setNewProject] = useState({ name: '', description: '', members: [] });
 
     const fetchProjects = async () => {
         try {
@@ -18,9 +19,22 @@ const Projects = () => {
         }
     };
 
+    const fetchUsers = async () => {
+        try {
+            const config = { headers: { Authorization: `Bearer ${user.token}` } };
+            const { data } = await api.get('/auth/users', config);
+            setUsers(data);
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
     useEffect(() => {
         fetchProjects();
-    }, []);
+        if (user.role === 'Admin') {
+            fetchUsers();
+        }
+    }, [user]);
 
     const handleCreate = async (e) => {
         e.preventDefault();
@@ -28,11 +42,20 @@ const Projects = () => {
             const config = { headers: { Authorization: `Bearer ${user.token}` } };
             await api.post('/projects', newProject, config);
             setShowCreate(false);
-            setNewProject({ name: '', description: '' });
+            setNewProject({ name: '', description: '', members: [] });
             fetchProjects();
         } catch (error) {
             console.error(error);
         }
+    };
+
+    const handleMemberToggle = (userId) => {
+        setNewProject(prev => {
+            const members = prev.members.includes(userId)
+                ? prev.members.filter(id => id !== userId)
+                : [...prev.members, userId];
+            return { ...prev, members };
+        });
     };
 
     return (
@@ -65,6 +88,23 @@ const Projects = () => {
                             value={newProject.description}
                             onChange={(e) => setNewProject({...newProject, description: e.target.value})}
                         ></textarea>
+                        
+                        <div style={{ marginBottom: '1rem' }}>
+                            <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Assign Members:</label>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                                {users.filter(u => u._id !== user._id).map(u => (
+                                    <label key={u._id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--bg-dark)', padding: '0.5rem', borderRadius: '4px', cursor: 'pointer' }}>
+                                        <input 
+                                            type="checkbox" 
+                                            checked={newProject.members.includes(u._id)}
+                                            onChange={() => handleMemberToggle(u._id)}
+                                        />
+                                        {u.name} ({u.role})
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
+
                         <button type="submit" className="btn-primary">Create Project</button>
                     </form>
                 </div>

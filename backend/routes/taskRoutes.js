@@ -14,8 +14,8 @@ router.get('/', protect, async (req, res) => {
             const projectIds = projects.map(p => p._id);
             tasks = await Task.find({ project: { $in: projectIds } }).populate('project', 'name').populate('assignedTo', 'name email');
         } else {
-            // Member sees tasks assigned to them
-            tasks = await Task.find({ assignedTo: req.user._id }).populate('project', 'name');
+            // Member sees all tasks
+            tasks = await Task.find().populate('project', 'name').populate('assignedTo', 'name email');
         }
         res.json(tasks);
     } catch (error) {
@@ -67,7 +67,7 @@ router.put('/:id', protect, async (req, res) => {
             if (project && project.owner.toString() === req.user._id.toString()) {
                 isAuthorized = true;
             }
-        } else if (task.assignedTo && task.assignedTo.toString() === req.user._id.toString()) {
+        } else {
             isAuthorized = true;
         }
 

@@ -10,7 +10,7 @@ router.get('/', protect, async (req, res) => {
         if (req.user.role === 'Admin') {
             projects = await Project.find({ owner: req.user._id }).populate('members', 'name email');
         } else {
-            projects = await Project.find({ members: req.user._id }).populate('owner', 'name email');
+            projects = await Project.find().populate('owner', 'name email');
         }
         res.json(projects);
     } catch (error) {

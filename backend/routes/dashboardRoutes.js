@@ -12,7 +12,7 @@ router.get('/summary', protect, async (req, res) => {
             const projectIds = projects.map(p => p._id);
             tasks = await Task.find({ project: { $in: projectIds } });
         } else {
-            tasks = await Task.find({ assignedTo: req.user._id });
+            tasks = await Task.find();
         }
 
         const totalTasks = tasks.length;

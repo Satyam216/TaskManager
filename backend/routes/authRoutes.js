@@ -57,4 +57,16 @@ router.post('/login', async (req, res) => {
     }
 });
 
+const { protect } = require('../middleware/authMiddleware');
+
+router.get('/users', protect, async (req, res) => {
+    try {
+        const users = await User.find({}).select('-password');
+        res.json(users);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
 module.exports = router;
