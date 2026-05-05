@@ -48,7 +48,7 @@ Ethara.AI_Task/
 ```
 
 ## 🌐 Live URL
-- **Live Application:** [Insert your Vercel/Railway Live URL Here]
+- **Live Application:** https://task-manager-21.vercel.app/
 
 ## 🔑 Test Accounts
 You can test the application using the following pre-created accounts which are securely stored in the MongoDB Atlas database.
@@ -61,6 +61,11 @@ You can test the application using the following pre-created accounts which are 
 - **Email:** `alice2@test.com`
 - **Password:** `password123`
 
+**Test Account 3 (Member Role):**
+- **Email:** `satyam@gmail.com`
+- **Password:** `satyam@123`
+
+
 *Note: You can also dynamically create your own new Admin or Member accounts at any time directly from the Login/Signup page!*
 
 ## ⚙️ Local Setup
@@ -68,7 +73,7 @@ To run this project on your local machine:
 
 1. **Clone the repository:**
    ```bash
-   git clone <repo-url>
+   git clone https://github.com/Satyam216/TaskManager.git
    ```
 
 2. **Start the Backend:**
